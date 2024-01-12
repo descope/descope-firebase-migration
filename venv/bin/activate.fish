@@ -30,7 +30,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV "/Users/kevingao/descope-auth0-migration-without-passwords/venv"
+set -gx VIRTUAL_ENV "/Users/kevingao/descope-firebase-migration/venv"
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/bin" $PATH

@@ -1,4 +1,4 @@
-#!/Users/kevingao/descope-auth0-migration-without-passwords/venv/bin/python3
+#!/Users/kevingao/descope-firebase-migration/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys

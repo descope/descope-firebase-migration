@@ -38,7 +38,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="/Users/kevingao/descope-auth0-migration-without-passwords/venv"
+VIRTUAL_ENV="/Users/kevingao/descope-firebase-migration/venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
