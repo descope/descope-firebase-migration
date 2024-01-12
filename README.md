@@ -1,4 +1,4 @@
-<img width="1400" alt="Descope Auth0 Migration Tool" src="https://github.com/descope/descope-auth0-migration/assets/32936811/992ee6e4-682c-4659-b333-f1d32c16258f">
+<img width="1400" alt="Screenshot 2024-01-11 at 10 37 23 PM" src="https://github.com/descope/descope-firebase-migration/assets/32936811/2b5e6106-198d-4be5-b90d-a997fdce8be5">
 
 # Descope Firebase User Migration Tool
 
@@ -33,6 +33,8 @@ a. First, you'll need to open Settings > [Service Accounts](https://console.fire
 
 b. Click `Generate New Private Key`, then confirm by clicking `Generate Key`.
 
+<img width="931" alt="Monosnap test - Project settings - Firebase console 2024-01-11 22-34-33" src="https://github.com/descope/descope-firebase-migration/assets/32936811/e4dd6cdf-2b8d-47e6-90a4-25be429b6ad8">
+
 c. Securely store the JSON file containing the key, in the `/creds` folder, in the root of this repository.
 
 > **Note**: You can read more about the setup process on the Firebase [docs page](https://firebase.google.com/docs/admin/setup).
@@ -61,6 +63,8 @@ To find your Firebase Realtime Database URL:
 2. Select your project.
 3. Navigate to `Realtime Database` in the `Develop` section.
 4. Your database URL will be displayed at the top of the Database screen. It typically follows the format `https://<your-project-id>.firebaseio.com/`.
+
+<img width="1356" alt="Monosnap test - Realtime Database - Firebase console 2024-01-11 22-35-59" src="https://github.com/descope/descope-firebase-migration/assets/32936811/ce6b66a0-04b5-4824-829a-4e10e2754fe9">
 
 > **Note**: Ensure that your Firebase Database rules allow the necessary read/write operations for your application.
 
