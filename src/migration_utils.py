@@ -33,8 +33,6 @@ logging.basicConfig(
 
 """Load and read environment variables from .env file"""
 load_dotenv()
-FIREBASE_API_KEY = os.getenv("FIREBASE_API_KEY")
-FIREBASE_PROJECT_ID = os.getenv("FIREBASE_PROJECT_ID")
 FIREBASE_DB_URL = os.getenv("FIREBASE_DB_URL")
 DESCOPE_PROJECT_ID = os.getenv("DESCOPE_PROJECT_ID")
 DESCOPE_MANAGEMENT_KEY = os.getenv("DESCOPE_MANAGEMENT_KEY")
@@ -209,11 +207,11 @@ def create_descope_user(user):
         password_hash = user_data.get("passwordHash")
         salt = user_data.get("salt")
 
-        if password_hash and salt:
-            combined_password = password_hash + salt
-            descope_client.mgmt.user.set_password(
-                login_id=login_id, password=combined_password
-            )
+        # if password_hash and salt:
+        #     combined_password = password_hash + salt
+        #     descope_client.mgmt.user.set_password(
+        #         login_id=login_id, password=combined_password
+        #     )
 
         # Update user status in Descope based on Firebase status
         if is_disabled:
