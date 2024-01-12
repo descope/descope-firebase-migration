@@ -6,9 +6,7 @@ This repository includes a Python utility for migrating your Firebase users to D
 
 This tool will transfer the following infomration:
 
-- **Users** - all user information, including custom attributes defined in Realtime Database (if applicable)
-
-> **Note**: If you're using [Cloud Firestore](https://firebase.google.com/docs/firestore), you'll need to modify
+- **Users** - all user information, including custom attributes defined in Realtime Database or Firestore (if applicable)
 
 ## Setup 💿
 
