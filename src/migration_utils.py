@@ -149,6 +149,20 @@ def fetch_firebase_users():
     return all_users
 
 
+def fetch_custom_attributes(user_id):
+    """
+    Fetch custom attributes for a given user ID from Firebase Realtime Database.
+
+    Args:
+    - user_id (str): The user's ID in Firebase.
+
+    Returns:
+    - dict: A dictionary of custom attributes.
+    """
+    ref = db.reference(f"users/{user_id}")
+    return ref.get() or {}
+
+
 ### End Firebase Actions
 
 ### Begin Descope Actions
@@ -177,14 +191,14 @@ def create_descope_user(user):
         verified_phone = user_data.get("phoneVerified", False) if phone else False
 
         # Fetch custom attributes from Firebase Realtime Database, if URL is provided
-        custom_attributes = {}
+        custom_attributes = {"freshlyMigrated": True}
         if FIREBASE_DB_URL:
             user_id = user_data.get("localId")
             if user_id:
-                custom_attributes_ref = db.reference(
-                    f"path/to/customAttributes/{user_id}"
+                additional_attributes = fetch_custom_attributes(
+                    user_data.get("localId")
                 )
-                custom_attributes = custom_attributes_ref.get() or {}
+                custom_attributes.update(additional_attributes)
 
         # Status of the user (enabled/disabled)
         is_disabled = user_data.get("disabled", False)
@@ -204,8 +218,8 @@ def create_descope_user(user):
             additional_login_ids=[],  # Add this if there are additional login IDs
         )
 
-        password_hash = user_data.get("passwordHash")
-        salt = user_data.get("salt")
+        # password_hash = user_data.get("passwordHash")
+        # salt = user_data.get("salt")
 
         # if password_hash and salt:
         #     combined_password = password_hash + salt

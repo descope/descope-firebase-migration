@@ -4,6 +4,10 @@
 
 This repository includes a Python utility for migrating your Firebase users to Descope.
 
+This tool will transfer the following infomration:
+
+- **Users** - all user information, including custom attributes defined in Realtime Database (if applicable)
+
 ## Setup 💿
 
 1. Clone the Repo:
@@ -55,7 +59,7 @@ a. To get your Descope Project ID, go [here](https://app.descope.com/settings/pr
 b. To create a Descope Management Key, go [here](https://app.descope.com/settings/company/managementkeys), then copy
 the token to your `.env` file.
 
-c. The `FIREBASE_DB_URL` is the endpoint URL of your Firebase Realtime Database. This URL is required for the application to interact with your Firebase Database, enabling it to read and write data.
+c. The `FIREBASE_DB_URL` is the endpoint URL of your Firebase Realtime Database. This URL is required for the application to interact with your Firebase Database, enabling it to read and write data. If you do not use Realtime Database, you can skip to the `Step 6`.
 
 To find your Firebase Realtime Database URL:
 
@@ -122,6 +126,11 @@ Created users within Descope 112
 
 Once the migration tool has ran successfully, you can check the [users](https://app.descope.com/users) for the migrated users from Firebase. You can verify the created users based on the output of the migration tool.
 
+You can also migrate over your other Firebase configurations, manually in the console. For example:
+
+- **Authorized Domains** - you can move these over to the [Approved Domains](https://app.descope.com/settings/project) section in the Descope Console
+- **Enable Create (Sign Up)** - you can block self-registration under [Project Settings](https://app.descope.com/settings/project) in the Descope Console
+
 ## Testing 🧪
 
 Unit testing can be performed by running the following command:
@@ -129,6 +138,8 @@ Unit testing can be performed by running the following command:
 ```
 python3 -m unittest tests.test_migration
 ```
+
+You can edit the values if you wish, to test whether or not the Firebase Admin SDK is working properly.
 
 ## Issue Reporting ⚠️
 
