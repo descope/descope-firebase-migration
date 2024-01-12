@@ -61,7 +61,7 @@ a. To get your Descope Project ID, go [here](https://app.descope.com/settings/pr
 b. To create a Descope Management Key, go [here](https://app.descope.com/settings/company/managementkeys), then copy
 the token to your `.env` file.
 
-c. The `FIREBASE_DB_URL` is the endpoint URL of your Firebase Realtime Database. This URL is required for the application to interact with your Firebase Database, enabling it to read and write data. If you do not use Realtime Database, you can skip to the `Step 6`.
+c. **OPTIONAL** - If you're using the Firebase Realtime Database, make sure that you include your `FIREBASE_DB_URL` in the `.env` file. This URL is required for the application to interact with your Firebase Database, enabling it to read and write data. If you do not use Realtime Database, you can skip to the `Step 6`.
 
 To find your Firebase Realtime Database URL:
 
@@ -72,13 +72,13 @@ To find your Firebase Realtime Database URL:
 
 <img width="700" alt="Monosnap test - Realtime Database - Firebase console 2024-01-11 22-35-59" src="https://github.com/descope/descope-firebase-migration/assets/32936811/ce6b66a0-04b5-4824-829a-4e10e2754fe9">
 
-> **Note**: Ensure that your Firebase Realtime Database rules allow the necessary read/write operations for your application.
+> **Note**: If you're using the Firebase Realtime Database, make sure your rules allow the necessary read/write operations for your application.
 
 6. The tool depends on a few custom user attributes you need to create within Descope to assist you with the migration. The below outlines the machine names of the attributes to create within the [user's custom attributes](https://app.descope.com/users/attributes) section of the Descope console.
 
 - `freshlyMigrated` (type: Boolean): This custom attribute will be set to true during the migration. This allows for you
   to later check this via a conditional during Descope flow execution.
-- All other custom attributes defined in the Realtime Database Schema. Here is an example (with strings and booleans):
+- All other custom attributes defined in either Firestore or the Realtime Database Schema. Here is an example of that schema (with strings and booleans):
 
 ```
 https://test-62234-example.firebaseio.com/
@@ -98,7 +98,7 @@ https://test-62234-example.firebaseio.com/
         └───email: "test@descope.com"
 ```
 
-If you're going to migrate any other custom attributes, via the Realtime Database, you'll need to create those as well in the Descope Console before you run this script.
+If you're going to migrate any other custom attributes, you'll need to create those attributes as well in the Descope Console before you run this script.
 
 Once you've set all of that up, you're ready to run the script.
 
@@ -127,9 +127,13 @@ To migrate your Firebase users, simply run the following command:
 python3 src/main.py
 ```
 
-The output will include the responses of the created users, organizations, roles, and permissions as well as the mapping between the various objects within Descope:
+> **NOTE**: If you're using Realtime Database, see Step 5(c) above, as you will need to provide the `FIREBASE_DB_URL` in your environment variables before you begin.
 
-The output will include the responses of the created users, organizations, roles, and permissions as well as the mapping between the various objects within Descope. A log file will also be generated in the format of `migration_log_%d_%m_%Y_%H:%M:%S.log`. Any items which failed to be migrated will also be listed with the error that occurred during the migration.
+The tool will first ask if you want to migrate custom attributes over. If you type `y`, then you'll need to provide the tool with the source of the attributes (either Firestore or Realtime Database). After that, the tool will begin migrating your users.
+
+The output will include the responses of the created usersas well as the mapping between the various objects within Descope.
+
+A log file will also be generated in the format of `migration_log_%d_%m_%Y_%H:%M:%S.log`. Any items which failed to be migrated will also be listed with the error that occurred during the migration.
 
 ```
 Starting migration of 112 users found via Firebase Admin SDK
