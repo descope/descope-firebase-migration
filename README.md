@@ -37,7 +37,7 @@ a. First, you'll need to open Settings > [Service Accounts](https://console.fire
 
 b. Click `Generate New Private Key`, then confirm by clicking `Generate Key`.
 
-<img width="931" alt="Monosnap test - Project settings - Firebase console 2024-01-11 22-34-33" src="https://github.com/descope/descope-firebase-migration/assets/32936811/e4dd6cdf-2b8d-47e6-90a4-25be429b6ad8">
+<img width="700" alt="Monosnap test - Project settings - Firebase console 2024-01-11 22-34-33" src="https://github.com/descope/descope-firebase-migration/assets/32936811/e4dd6cdf-2b8d-47e6-90a4-25be429b6ad8">
 
 c. Securely store the JSON file containing the key, in the `/creds` folder, in the root of this repository.
 
@@ -68,7 +68,7 @@ To find your Firebase Realtime Database URL:
 3. Navigate to `Realtime Database` in the `Develop` section.
 4. Your database URL will be displayed at the top of the Database screen. It typically follows the format `https://<your-project-id>.firebaseio.com/`.
 
-<img width="1356" alt="Monosnap test - Realtime Database - Firebase console 2024-01-11 22-35-59" src="https://github.com/descope/descope-firebase-migration/assets/32936811/ce6b66a0-04b5-4824-829a-4e10e2754fe9">
+<img width="700" alt="Monosnap test - Realtime Database - Firebase console 2024-01-11 22-35-59" src="https://github.com/descope/descope-firebase-migration/assets/32936811/ce6b66a0-04b5-4824-829a-4e10e2754fe9">
 
 > **Note**: Ensure that your Firebase Database rules allow the necessary read/write operations for your application.
 
@@ -129,7 +129,16 @@ Once the migration tool has ran successfully, you can check the [users](https://
 You can also migrate over your other Firebase configurations, manually in the console. For example:
 
 - **Authorized Domains** - you can move these over to the [Approved Domains](https://app.descope.com/settings/project) section in the Descope Console
+
+Firebase Console             |  Descope Console
+:-------------------------:|:-------------------------:
+![](https://github.com/descope/descope-firebase-migration/assets/32936811/4e38cf44-0b36-413d-bdd5-b8e223ea841a)  |  ![](https://github.com/descope/descope-firebase-migration/assets/32936811/878152a6-8142-4efe-a31f-7edbc71e1e32)
+
 - **Enable Create (Sign Up)** - you can block self-registration under [Project Settings](https://app.descope.com/settings/project) in the Descope Console
+
+Firebase Console             |  Descope Console
+:-------------------------:|:-------------------------:
+![](https://github.com/descope/descope-firebase-migration/assets/32936811/f236bfb5-2a56-4f11-800c-15339cb7c906)  |  ![](https://github.com/descope/descope-firebase-migration/assets/32936811/94490acc-e55e-48de-a824-63426d6ea261)
 
 ## Testing 🧪
 
