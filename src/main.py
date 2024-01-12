@@ -1,6 +1,7 @@
 from migration_utils import (
     fetch_firebase_users,
     process_users,
+    set_custom_attribute_source,
 )
 import argparse
 
@@ -13,6 +14,22 @@ def main():
         description="This is a program to assist you in the migration of your users, roles, permissions, and organizations to Descope."
     )
     parser.add_argument("--dry-run", action="store_true", help="Enable dry run mode")
+
+    # Ask the user if they want to import custom attributes
+    import_custom_attributes = (
+        input("Do you want to import custom user attributes? (y/n): ").strip().lower()
+    )
+    attribute_source = None
+
+    if import_custom_attributes == "y":
+        while attribute_source not in ["firestore", "realtime"]:
+            attribute_source = (
+                input("Enter the source of custom attributes (firestore or realtime): ")
+                .strip()
+                .lower()
+            )
+        set_custom_attribute_source(attribute_source)
+
     args = parser.parse_args()
     dry_run = False
 

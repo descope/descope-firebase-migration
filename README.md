@@ -8,6 +8,8 @@ This tool will transfer the following infomration:
 
 - **Users** - all user information, including custom attributes defined in Realtime Database (if applicable)
 
+> **Note**: If you're using [Cloud Firestore](https://firebase.google.com/docs/firestore), you'll need to modify
+
 ## Setup 💿
 
 1. Clone the Repo:
@@ -70,12 +72,31 @@ To find your Firebase Realtime Database URL:
 
 <img width="700" alt="Monosnap test - Realtime Database - Firebase console 2024-01-11 22-35-59" src="https://github.com/descope/descope-firebase-migration/assets/32936811/ce6b66a0-04b5-4824-829a-4e10e2754fe9">
 
-> **Note**: Ensure that your Firebase Database rules allow the necessary read/write operations for your application.
+> **Note**: Ensure that your Firebase Realtime Database rules allow the necessary read/write operations for your application.
 
 6. The tool depends on a few custom user attributes you need to create within Descope to assist you with the migration. The below outlines the machine names of the attributes to create within the [user's custom attributes](https://app.descope.com/users/attributes) section of the Descope console.
 
 - `freshlyMigrated` (type: Boolean): This custom attribute will be set to true during the migration. This allows for you
   to later check this via a conditional during Descope flow execution.
+- All other custom attributes defined in the Realtime Database Schema. Here is an example (with strings and booleans):
+
+```
+https://test-62234-example.firebaseio.com/
+│
+└───users
+    │
+    ├───user1
+    │   ├───uid: "user1"
+    │   ├───changedPassword: true
+    │   └───email: "example@descope.com"
+    │       ├───newsletter: true
+    │       └───theme: "dark"
+    │
+    ├───user2
+        ├───uid: "user2"
+        ├───changedPassword: false
+        └───email: "test@descope.com"
+```
 
 If you're going to migrate any other custom attributes, via the Realtime Database, you'll need to create those as well in the Descope Console before you run this script.
 
@@ -130,15 +151,15 @@ You can also migrate over your other Firebase configurations, manually in the co
 
 - **Authorized Domains** - you can move these over to the [Approved Domains](https://app.descope.com/settings/project) section in the Descope Console
 
-Firebase Console             |  Descope Console
-:-------------------------:|:-------------------------:
-![](https://github.com/descope/descope-firebase-migration/assets/32936811/4e38cf44-0b36-413d-bdd5-b8e223ea841a)  |  ![](https://github.com/descope/descope-firebase-migration/assets/32936811/878152a6-8142-4efe-a31f-7edbc71e1e32)
+|                                                Firebase Console                                                 |                                                 Descope Console                                                 |
+| :-------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------: |
+| ![](https://github.com/descope/descope-firebase-migration/assets/32936811/4e38cf44-0b36-413d-bdd5-b8e223ea841a) | ![](https://github.com/descope/descope-firebase-migration/assets/32936811/878152a6-8142-4efe-a31f-7edbc71e1e32) |
 
 - **Enable Create (Sign Up)** - you can block self-registration under [Project Settings](https://app.descope.com/settings/project) in the Descope Console
 
-Firebase Console             |  Descope Console
-:-------------------------:|:-------------------------:
-![](https://github.com/descope/descope-firebase-migration/assets/32936811/f236bfb5-2a56-4f11-800c-15339cb7c906)  |  ![](https://github.com/descope/descope-firebase-migration/assets/32936811/94490acc-e55e-48de-a824-63426d6ea261)
+|                                                Firebase Console                                                 |                                                 Descope Console                                                 |
+| :-------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------: |
+| ![](https://github.com/descope/descope-firebase-migration/assets/32936811/f236bfb5-2a56-4f11-800c-15339cb7c906) | ![](https://github.com/descope/descope-firebase-migration/assets/32936811/94490acc-e55e-48de-a824-63426d6ea261) |
 
 ## Testing 🧪
 

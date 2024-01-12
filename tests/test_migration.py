@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from src.migration_utils import fetch_firebase_users
+from src.migration_utils import fetch_firebase_users, create_descope_user
 
 
 class TestMigration(unittest.TestCase):
@@ -32,6 +32,18 @@ class TestMigration(unittest.TestCase):
         # Call the function and expect an empty result due to error
         users = fetch_firebase_users()
         self.assertEqual(len(users), 12)
+
+    @patch("your_module.fetch_custom_attributes")
+    def test_create_descope_user(self, mock_fetch_custom_attributes):
+        # Mock the custom attributes returned by fetch_custom_attributes
+        mock_fetch_custom_attributes.return_value = {
+            "company": "MockCorp",
+            "email": "mockuser@mock.com",
+            "changedOTP": True,
+        }
+
+        user_data = {"localId": "mockuser"}
+        result = create_descope_user(user_data)
 
 
 if __name__ == "__main__":

@@ -15,6 +15,7 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import auth
 from firebase_admin import db
+from firebase_admin import firestore
 
 log_directory = "logs"
 if not os.path.exists(log_directory):
@@ -53,6 +54,8 @@ if FIREBASE_DB_URL:
     firebase_admin.initialize_app(cred, {"databaseURL": FIREBASE_DB_URL})
 else:
     firebase_admin.initialize_app(cred)
+
+attribute_source = None
 
 
 def api_request_with_retry(action, url, headers, data=None, max_retries=4, timeout=10):
@@ -130,11 +133,11 @@ def fetch_firebase_users():
                 user_dict = user.__dict__
 
                 # Fetch custom attributes from Firebase Database
-                if FIREBASE_DB_URL:
-                    custom_attributes = db.reference(
-                        f"path/to/user/{user.uid}/customAttributes"
-                    ).get()
-                    user_dict["customAttributes"] = custom_attributes or {}
+                # if FIREBASE_DB_URL:
+                #     custom_attributes = db.reference(
+                #         f"path/to/user/{user.uid}/customAttributes"
+                #     ).get()
+                #     user_dict["customAttributes"] = custom_attributes or {}
                 all_users.append(user_dict)
 
             if not page.has_next_page:
@@ -151,7 +154,7 @@ def fetch_firebase_users():
 
 def fetch_custom_attributes(user_id):
     """
-    Fetch custom attributes for a given user ID from Firebase Realtime Database.
+    Fetch custom attributes for a given user ID from either Realtime Database or Firestore
 
     Args:
     - user_id (str): The user's ID in Firebase.
@@ -159,8 +162,19 @@ def fetch_custom_attributes(user_id):
     Returns:
     - dict: A dictionary of custom attributes.
     """
-    ref = db.reference(f"users/{user_id}")
-    return ref.get() or {}
+    if attribute_source == "firestore":
+        firestore_db = firestore.client()
+        doc_ref = firestore_db.collection("users").document(user_id)
+        return doc_ref.get() or {}
+    elif attribute_source == "realtime":
+        ref = db.reference(f"users/{user_id}")
+        return ref.get() or {}
+    return {}
+
+
+def set_custom_attribute_source(source):
+    global attribute_source
+    attribute_source = source
 
 
 ### End Firebase Actions
@@ -204,7 +218,7 @@ def create_descope_user(user):
         is_disabled = user_data.get("disabled", False)
 
         # Create the Descope user
-        descope_response = descope_client.mgmt.user.create(
+        descope_client.mgmt.user.create(
             login_id=login_id,
             email=email,
             display_name=display_name,
