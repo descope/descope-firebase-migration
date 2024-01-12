@@ -8,7 +8,7 @@ import argparse
 
 def main():
     """
-    Main function to process Auth0 users, roles, permissions, and organizations, creating and mapping them together within your Descope project.
+    Main function to process Firebase users, roles, permissions, and organizations, creating and mapping them together within your Descope project.
     """
     parser = argparse.ArgumentParser(
         description="This is a program to assist you in the migration of your users, roles, permissions, and organizations to Descope."
