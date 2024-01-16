@@ -4,7 +4,7 @@
 
 This repository includes a Python utility for migrating your Firebase users to Descope.
 
-This tool will transfer the following infomration:
+This tool will transfer the following information:
 
 - **Users** - all user information, including custom attributes defined in Realtime Database or Firestore (if applicable)
 
