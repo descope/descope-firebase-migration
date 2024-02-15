@@ -285,7 +285,6 @@ def create_descope_user(user, hash_params):
                 custom_attributes.update(additional_attributes)
 
         # Create the Descope user
-
         user_object = build_user_object_with_passwords(extracted_user, hash_params)
         success = invite_batch(user_object, login_id, is_disabled)
 
