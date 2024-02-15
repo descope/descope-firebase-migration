@@ -9,6 +9,9 @@ from datetime import datetime
 from descope import (
     AuthException,
     DescopeClient,
+    UserPassword,
+    UserPasswordFirebase,
+    UserObj,
 )
 
 import firebase_admin
@@ -182,7 +185,60 @@ def set_custom_attribute_source(source):
 ### Begin Descope Actions
 
 
-def create_descope_user(user):
+def build_user_object_with_passwords(extracted_user, hash_params):
+    userPasswordToCreate = UserPassword(
+        hashed=UserPasswordFirebase(
+            hash=extracted_user["password_hash"],
+            salt=extracted_user["salt"],
+            salt_separator=hash_params["salt_separator"],
+            signer_key=hash_params["signer_key"],
+            memory=hash_params["mem_cost"],
+            rounds=hash_params["rounds"],
+        )
+    )
+
+    user_object = [
+        UserObj(
+            login_id=extracted_user["email"],
+            email=extracted_user["email"],
+            display_name=extracted_user["display_name"],
+            given_name=extracted_user["given_name"],
+            family_name=extracted_user["family_name"],
+            phone=extracted_user["phone"],
+            picture=extracted_user["picture"],
+            verified_email=extracted_user["verified_email"],
+            verified_phone=extracted_user["verified_phone"],
+            password=userPasswordToCreate,
+            custom_attributes=extracted_user["custom_attributes"],
+        )
+    ]
+    return user_object
+
+
+def invite_batch(user_object, login_id, is_disabled):
+    # Create the user
+    try:
+        resp = descope_client.mgmt.user.invite_batch(
+            users=user_object,
+            invite_url="https://localhost",
+            send_mail=False,
+            send_sms=False,
+        )
+
+        # Update user status in Descope based on Firebase status
+        if is_disabled:
+            descope_client.mgmt.user.deactivate(login_id=login_id)
+        else:
+            descope_client.mgmt.user.activate(login_id=login_id)
+
+        return True
+    except AuthException as error:
+        logging.error("Unable to create user with password.")
+        logging.error(f"Error:, {error.error_message}")
+        return False
+
+
+def create_descope_user(user, hash_params):
     """
     Create a Descope user based on matched Firebase user data using Descope Python SDK.
 
@@ -193,19 +249,33 @@ def create_descope_user(user):
         # Extracting user data from the nested '_data' structure
         user_data = user.get("_data", {})
 
-        # Default Firebase user attributes
+        custom_attributes = {"freshlyMigrated": True}
+        is_disabled = user_data.get("disabled", False)
         login_id = user_data.get("email")
-        email = user_data.get("email")
-        phone = user_data.get("phoneNumber")
-        display_name = user_data.get("displayName")
-        given_name = user_data.get("givenName")
-        family_name = user_data.get("familyName")
-        picture = user_data.get("photoUrl")
-        verified_email = user_data.get("emailVerified", False)
-        verified_phone = user_data.get("phoneVerified", False) if phone else False
+
+        password_hash = user_data.get("passwordHash") or ""
+        salt = user_data.get("salt") or ""
+
+        # Default Firebase user attributes
+        extracted_user = {
+            "login_id": user_data.get("email"),
+            "email": user_data.get("email"),
+            "phone": user_data.get("phoneNumber"),
+            "display_name": user_data.get("displayName"),
+            "given_name": user_data.get("givenName"),
+            "family_name": user_data.get("familyName"),
+            "picture": user_data.get("photoUrl"),
+            "verified_email": user_data.get("emailVerified", False),
+            "verified_phone": user_data.get("phoneVerified", False)
+            if user_data.get("phoneNumber")
+            else False,
+            "custom_attributes": custom_attributes,
+            "is_disabled": is_disabled,
+            "password_hash": password_hash,
+            "salt": salt,
+        }
 
         # Fetch custom attributes from Firebase Realtime Database, if URL is provided
-        custom_attributes = {"freshlyMigrated": True}
         if FIREBASE_DB_URL:
             user_id = user_data.get("localId")
             if user_id:
@@ -214,40 +284,11 @@ def create_descope_user(user):
                 )
                 custom_attributes.update(additional_attributes)
 
-        # Status of the user (enabled/disabled)
-        is_disabled = user_data.get("disabled", False)
-
         # Create the Descope user
-        descope_client.mgmt.user.create(
-            login_id=login_id,
-            email=email,
-            display_name=display_name,
-            given_name=given_name,
-            family_name=family_name,
-            phone=phone,
-            picture=picture,
-            custom_attributes=custom_attributes,
-            verified_email=verified_email,
-            verified_phone=verified_phone,
-            additional_login_ids=[],  # Add this if there are additional login IDs
-        )
+        user_object = build_user_object_with_passwords(extracted_user, hash_params)
+        success = invite_batch(user_object, login_id, is_disabled)
 
-        # password_hash = user_data.get("passwordHash")
-        # salt = user_data.get("salt")
-
-        # if password_hash and salt:
-        #     combined_password = password_hash + salt
-        #     descope_client.mgmt.user.set_password(
-        #         login_id=login_id, password=combined_password
-        #     )
-
-        # Update user status in Descope based on Firebase status
-        if is_disabled:
-            descope_client.mgmt.user.deactivate(login_id=login_id)
-        else:
-            descope_client.mgmt.user.activate(login_id=login_id)
-
-        return True, False, False, ""
+        return success, False, False, login_id
 
     except AuthException as error:
         logging.error(f"Unable to create user. {user}")
@@ -265,7 +306,7 @@ def create_descope_user(user):
 ### Begin Process Functions
 
 
-def process_users(api_response_users, dry_run):
+def process_users(api_response_users, hash_params, dry_run):
     """
     Process the list of users from Firebase by mapping and creating them in Descope.
 
@@ -284,7 +325,7 @@ def process_users(api_response_users, dry_run):
         )
         for user in api_response_users:
             success, merged, disabled_mismatch, user_id_error = create_descope_user(
-                user
+                user, hash_params
             )
             if success:
                 successful_migrated_users += 1

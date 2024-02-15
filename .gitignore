@@ -2,3 +2,6 @@
 /venv
 /logs
 /src/__pycache__
+
+creds/*
+password-hash.txt

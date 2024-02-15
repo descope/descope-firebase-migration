@@ -43,7 +43,21 @@ c. Securely store the JSON file containing the key, in the `/creds` folder, in t
 
 > **Note**: You can read more about the setup process on the Firebase [docs page](https://firebase.google.com/docs/admin/setup).
 
-5. Setup Your Environment Variables
+5. Copy over Password Hash Parameters from Firebase Console
+
+In order to successfully copy over the passwords over your users, you'll need to provide the password hash parameters that are specific to your Firebase project. You can find these in the Firebase Console, under Authentication -> Users.
+
+<img width="700" alt="Monosnap test - Authentication with Identity Platform - Firebase console 2024-02-08 11-11-48" src="https://github.com/descope/descope-firebase-migration/assets/32936811/a938b920-f146-4756-a3ae-8c6c1cc971b7">
+
+a. Under the three dots in the top right corner, you'll find the option for `Password hash parameters`. Click on it.
+
+<img width="700" alt="Monosnap test - Authentication with Identity Platform - Firebase console 2024-02-08 11-11-10" src="https://github.com/descope/descope-firebase-migration/assets/32936811/fa6b2a5b-ee54-4d3c-886e-b0a62156f50e">
+
+b. Once you've opened these up, copy these over to a `password-hash.txt` file and place it in the `/creds` folder, which you can see as an example [here](password-hash.txt.example).
+
+After that, the migration tool will automatically recognize it and extract the necessary claims from the parameters JSON.
+
+6. Setup Your Environment Variables
 
 You can change the name of the `.env.example` file to `.env` to use as a template.
 
@@ -72,7 +86,7 @@ To find your Firebase Realtime Database URL:
 
 > **Note**: If you're using the Firebase Realtime Database, make sure your rules allow the necessary read/write operations for your application.
 
-6. The tool depends on a few custom user attributes you need to create within Descope to assist you with the migration. The below outlines the machine names of the attributes to create within the [user's custom attributes](https://app.descope.com/users/attributes) section of the Descope console.
+7. The tool depends on a few custom user attributes you need to create within Descope to assist you with the migration. The below outlines the machine names of the attributes to create within the [user's custom attributes](https://app.descope.com/users/attributes) section of the Descope console.
 
 - `freshlyMigrated` (type: Boolean): This custom attribute will be set to true during the migration. This allows for you
   to later check this via a conditional during Descope flow execution.
