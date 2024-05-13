@@ -94,11 +94,13 @@ def parse_hash_params(hash_params_file_path):
             for line in file:
                 line = line.strip()
                 if line.startswith("algorithm:"):
-                    hash_params["algorithm"] = line.split(":", 1)[1].strip()
+                    hash_params["algorithm"] = line.split(":", 1)[1].strip().strip(",")
                 elif line.startswith("base64_signer_key:"):
-                    hash_params["signer_key"] = line.split(":", 1)[1].strip()
+                    hash_params["signer_key"] = line.split(":", 1)[1].strip().strip(",")
                 elif line.startswith("base64_salt_separator:"):
-                    hash_params["salt_separator"] = line.split(":", 1)[1].strip()
+                    hash_params["salt_separator"] = (
+                        line.split(":", 1)[1].strip().strip(",")
+                    )
                 elif line.startswith("rounds:"):
                     # Added strip(',') to remove any trailing commas
                     hash_params["rounds"] = int(
