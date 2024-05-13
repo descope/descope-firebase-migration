@@ -168,7 +168,10 @@ def fetch_custom_attributes(user_id):
     if attribute_source == "firestore":
         firestore_db = firestore.client()
         doc_ref = firestore_db.collection("users").document(user_id)
-        return doc_ref.get() or {}
+        doc_snapshot = doc_ref.get()
+        if doc_snapshot.exists:
+            return doc_snapshot.to_dict() or {}
+        return {}
     elif attribute_source == "realtime":
         ref = db.reference(f"users/{user_id}")
         return ref.get() or {}
@@ -186,40 +189,58 @@ def set_custom_attribute_source(source):
 
 
 def build_user_object_with_passwords(extracted_user, hash_params):
-    userPasswordToCreate = UserPassword(
-        hashed=UserPasswordFirebase(
-            hash=extracted_user["password_hash"],
-            salt=extracted_user["salt"],
-            salt_separator=hash_params["salt_separator"],
-            signer_key=hash_params["signer_key"],
-            memory=hash_params["mem_cost"],
-            rounds=hash_params["rounds"],
+
+    if extracted_user["password_hash"]:
+        userPasswordToCreate = UserPassword(
+            hashed=UserPasswordFirebase(
+                hash=extracted_user["password_hash"],
+                salt=extracted_user["salt"],
+                salt_separator=hash_params["salt_separator"],
+                signer_key=hash_params["signer_key"],
+                memory=hash_params["mem_cost"],
+                rounds=hash_params["rounds"],
+            )
         )
-    )
 
-    user_object = [
-        UserObj(
-            login_id=extracted_user["email"],
-            email=extracted_user["email"],
-            display_name=extracted_user["display_name"],
-            given_name=extracted_user["given_name"],
-            family_name=extracted_user["family_name"],
-            phone=extracted_user["phone"],
-            picture=extracted_user["picture"],
-            verified_email=extracted_user["verified_email"],
-            verified_phone=extracted_user["verified_phone"],
-            password=userPasswordToCreate,
-            custom_attributes=extracted_user["custom_attributes"],
-        )
-    ]
-    return user_object
+        user_object = [
+            UserObj(
+                login_id=extracted_user["email"],
+                email=extracted_user["email"],
+                display_name=extracted_user["display_name"],
+                given_name=extracted_user["given_name"],
+                family_name=extracted_user["family_name"],
+                phone=extracted_user["phone"],
+                picture=extracted_user["picture"],
+                verified_email=extracted_user["verified_email"],
+                verified_phone=extracted_user["verified_phone"],
+                password=userPasswordToCreate,
+                custom_attributes=extracted_user["custom_attributes"],
+            )
+        ]
+        return user_object
+    else:
+        user_object = [
+            UserObj(
+                login_id=extracted_user["email"],
+                email=extracted_user["email"],
+                display_name=extracted_user["display_name"],
+                given_name=extracted_user["given_name"],
+                family_name=extracted_user["family_name"],
+                phone=extracted_user["phone"],
+                picture=extracted_user["picture"],
+                verified_email=extracted_user["verified_email"],
+                verified_phone=extracted_user["verified_phone"],
+                custom_attributes=extracted_user["custom_attributes"],
+            )
+        ]
+        return user_object
 
 
-def invite_batch(user_object, login_id, is_disabled):
+def invite_batch(user_objects, login_id, is_disabled):
     # Create the user
     try:
         resp = descope_client.mgmt.user.invite_batch(
-            users=user_object,
+            users=user_objects,
             invite_url="https://localhost",
             send_mail=False,
             send_sms=False,
@@ -228,13 +249,17 @@ def invite_batch(user_object, login_id, is_disabled):
         # Update user status in Descope based on Firebase status
         if is_disabled:
             descope_client.mgmt.user.deactivate(login_id=login_id)
+            logging.info(f"User {login_id} deactivated in Descope.")
         else:
             descope_client.mgmt.user.activate(login_id=login_id)
+            logging.info(f"User {login_id} activated in Descope.")
 
         return True
     except AuthException as error:
-        logging.error("Unable to create user with password.")
-        logging.error(f"Error:, {error.error_message}")
+        logging.error(
+            f"Unable to create users with password. Error: {error.error_message}"
+        )
+        print(f"Unable to create users with password. Error: {error.error_message}")
         return False
 
 
@@ -266,9 +291,11 @@ def create_descope_user(user, hash_params):
             "family_name": user_data.get("familyName"),
             "picture": user_data.get("photoUrl"),
             "verified_email": user_data.get("emailVerified", False),
-            "verified_phone": user_data.get("phoneVerified", False)
-            if user_data.get("phoneNumber")
-            else False,
+            "verified_phone": (
+                user_data.get("phoneVerified", False)
+                if user_data.get("phoneNumber")
+                else False
+            ),
             "custom_attributes": custom_attributes,
             "is_disabled": is_disabled,
             "password_hash": password_hash,
@@ -335,7 +362,7 @@ def process_users(api_response_users, hash_params, dry_run):
                         disabled_users_mismatch.append(user_id_error)
             else:
                 failed_users.append(user_id_error)
-            if successful_migrated_users % 10 == 0:
+            if successful_migrated_users > 0 and (successful_migrated_users % 10 == 0):
                 print(f"Still working, migrated {successful_migrated_users} users.")
     return (
         failed_users,
