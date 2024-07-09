@@ -362,14 +362,16 @@ def create_descope_user(user, hash_params):
                     mapped_dict = {
                         key: (
                             "String" if isinstance(value, str) else
-                            "Number" if isinstance(value, (int, float)) else
                             "Boolean" if isinstance(value, bool) else
+                            "Number" if isinstance(value, (int, float)) else
                             "String"
                         )
                         for key, value in flattend_attributes.items()
                     }
+                    
                     # Create the custom attributes will not make duplicates
                     create_custom_attributes_in_descope(mapped_dict)
+
 
                 
                     custom_attributes.update(flattend_attributes)
