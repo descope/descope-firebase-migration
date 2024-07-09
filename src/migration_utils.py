@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import logging
 import time
 import json
+import bcrypt
 from datetime import datetime
 from collections.abc import MutableMapping
 
@@ -13,6 +14,7 @@ from descope import (
     DescopeClient,
     UserPassword,
     UserPasswordFirebase,
+    UserPasswordBcrypt,
     UserObj,
 )
 
@@ -237,8 +239,13 @@ def build_user_object_with_passwords(extracted_user, hash_params):
     
     # Create temporary password if anonymous user
     elif (not extracted_user["email"]) and (not extracted_user["phone"]):
+        result = os.urandom(12)
+        hash = bcrypt.hashpw(result, bcrypt.gensalt())
+   
         userPasswordToCreate = UserPassword(
-            cleartext="@nonymousPass835"
+            hashed=UserPasswordBcrypt(
+                hash=hash.decode('utf-8')
+            )
         )
 
         user_object = [

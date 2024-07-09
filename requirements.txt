@@ -2,3 +2,4 @@ requests
 python-dotenv
 descope
 firebase-admin
+bcryptp
