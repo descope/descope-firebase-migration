@@ -39,7 +39,7 @@ b. Click `Generate New Private Key`, then confirm by clicking `Generate Key`.
 
 <img width="700" alt="Monosnap test - Project settings - Firebase console 2024-01-11 22-34-33" src="https://github.com/descope/descope-firebase-migration/assets/32936811/e4dd6cdf-2b8d-47e6-90a4-25be429b6ad8">
 
-c. Securely store the JSON file containing the key, in the `/creds` folder, in the root of this repository.
+c. Securely store the JSON file containing the key, in the `/creds` folder, in the root of this repository. Rename it to `firebase-certs.json`.
 
 > **Note**: You can read more about the setup process on the Firebase [docs page](https://firebase.google.com/docs/admin/setup).
 
@@ -86,10 +86,11 @@ To find your Firebase Realtime Database URL:
 
 > **Note**: If you're using the Firebase Realtime Database, make sure your rules allow the necessary read/write operations for your application.
 
-7. The tool depends on a few custom user attributes you need to create within Descope to assist you with the migration. The below outlines the machine names of the attributes to create within the [user's custom attributes](https://app.descope.com/users/attributes) section of the Descope console.
+7. The tool depends on a few custom user attributes that will be automatically created within Descope to assist you with the migration. The below outlines the machine names of the attributes that will be created within the [user's custom attributes](https://app.descope.com/users/attributes) section of the Descope console.
 
 - `freshlyMigrated` (type: Boolean): This custom attribute will be set to true during the migration. This allows for you
   to later check this via a conditional during Descope flow execution.
+- `UUID` (type: String): This is the UUID value of the user in firebase.
 - All other custom attributes defined in either Firestore or the Realtime Database Schema. Here is an example of that schema (with strings and booleans):
 
 ```
@@ -109,8 +110,6 @@ https://test-62234-example.firebaseio.com/
         ├───changedPassword: false
         └───email: "test@descope.com"
 ```
-
-If you're going to migrate any other custom attributes, you'll need to create those attributes as well in the Descope Console before you run this script.
 
 Once you've set all of that up, you're ready to run the script.
 

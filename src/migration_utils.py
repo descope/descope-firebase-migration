@@ -70,7 +70,7 @@ class AnonLoginId:
   def __init__(self):
     self.anon_counter = 0
 
-  def make_anon_email(self):
+  def make_anon_login_id(self):
     login_id = f"anon_user_{self.anon_counter}@anonymous.com"
     self.anon_counter += 1
     return login_id
@@ -317,11 +317,11 @@ def create_descope_user(user, hash_params):
 
         custom_attributes = {"freshlyMigrated": True}
         is_disabled = user_data.get("disabled", False)
-        login_id = user_data.get("email") if user_data.get("email") else user_data.get("phoneNumber") if user_data.get("phoneNumber") else anon.make_anon_email()
+        # Use Email if exists, otherwise phone, otherwise is anon user create anon login email
+        login_id = user_data.get("email") if user_data.get("email") else user_data.get("phoneNumber") if user_data.get("phoneNumber") else anon.make_anon_login_id()
 
         password_hash = user_data.get("passwordHash") or "" 
         salt = user_data.get("salt") or ""
-
 
         # Default Firebase user attributes
         extracted_user = {
@@ -368,12 +368,9 @@ def create_descope_user(user, hash_params):
                         )
                         for key, value in flattend_attributes.items()
                     }
-                    
+
                     # Create the custom attributes will not make duplicates
                     create_custom_attributes_in_descope(mapped_dict)
-
-
-                
                     custom_attributes.update(flattend_attributes)
 
         # Create the Descope user
@@ -492,7 +489,7 @@ def process_users(api_response_users, hash_params, dry_run):
         print(
             f"Starting migration of {len(api_response_users)} users found via Firebase Admin SDK"
         )
-        # create freshly migrated and UUID custom attributes 
+        # create freshlyMigrated and UUID custom attributes 
         freshly_migrated = {"freshlyMigrated":"Boolean"}
         uuid_attribute = {"UUID":"String"}
         create_custom_attributes_in_descope(freshly_migrated)
