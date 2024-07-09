@@ -4,7 +4,9 @@ import requests
 from dotenv import load_dotenv
 import logging
 import time
+import json
 from datetime import datetime
+from collections.abc import MutableMapping
 
 from descope import (
     AuthException,
@@ -50,7 +52,7 @@ except AuthException as error:
     sys.exit()
 
 cred = credentials.Certificate(
-    os.getcwd() + "/creds/test-62789-firebase-adminsdk-ulw0l-6028923de2.json"
+    os.getcwd() + "/creds/firebase-certs.json"
 )
 
 if FIREBASE_DB_URL:
@@ -60,6 +62,20 @@ else:
 
 attribute_source = None
 
+
+class AnonLoginId:
+  """
+  Class used to create anonymous user emails
+  """
+  def __init__(self):
+    self.anon_counter = 0
+
+  def make_anon_email(self):
+    login_id = f"anon_user_{self.anon_counter}@anonymous.com"
+    self.anon_counter += 1
+    return login_id
+
+anon = AnonLoginId()
 
 def api_request_with_retry(action, url, headers, data=None, max_retries=4, timeout=10):
     """
@@ -204,7 +220,7 @@ def build_user_object_with_passwords(extracted_user, hash_params):
 
         user_object = [
             UserObj(
-                login_id=extracted_user["email"],
+                login_id=extracted_user["login_id"],
                 email=extracted_user["email"],
                 display_name=extracted_user["display_name"],
                 given_name=extracted_user["given_name"],
@@ -218,10 +234,35 @@ def build_user_object_with_passwords(extracted_user, hash_params):
             )
         ]
         return user_object
+    
+    # Create temporary password if anonymous user
+    elif (not extracted_user["email"]) and (not extracted_user["phone"]):
+        userPasswordToCreate = UserPassword(
+            cleartext="@nonymousPass835"
+        )
+
+        user_object = [
+            UserObj(
+                login_id=extracted_user["login_id"],
+                email=extracted_user["email"],
+                display_name=extracted_user["display_name"],
+                given_name=extracted_user["given_name"],
+                family_name=extracted_user["family_name"],
+                phone=extracted_user["phone"],
+                picture=extracted_user["picture"],
+                verified_email=extracted_user["verified_email"],
+                verified_phone=extracted_user["verified_phone"],
+                password=userPasswordToCreate,
+                custom_attributes=extracted_user["custom_attributes"],
+            )
+        ]
+
+        return user_object
+
     else:
         user_object = [
             UserObj(
-                login_id=extracted_user["email"],
+                login_id=extracted_user["login_id"],
                 email=extracted_user["email"],
                 display_name=extracted_user["display_name"],
                 given_name=extracted_user["given_name"],
@@ -276,15 +317,16 @@ def create_descope_user(user, hash_params):
 
         custom_attributes = {"freshlyMigrated": True}
         is_disabled = user_data.get("disabled", False)
-        login_id = user_data.get("email")
+        login_id = user_data.get("email") if user_data.get("email") else user_data.get("phoneNumber") if user_data.get("phoneNumber") else anon.make_anon_email()
 
-        password_hash = user_data.get("passwordHash") or ""
+        password_hash = user_data.get("passwordHash") or "" 
         salt = user_data.get("salt") or ""
+
 
         # Default Firebase user attributes
         extracted_user = {
-            "login_id": user_data.get("email"),
-            "email": user_data.get("email"),
+            "login_id": login_id,
+            "email": user_data.get("email"), #login_id if (not user_data.get("email")) and (not user_data.get("phoneNumber")) else user_data.get("email"), # Uses email if it exists else uses anon_email
             "phone": user_data.get("phoneNumber"),
             "display_name": user_data.get("displayName"),
             "given_name": user_data.get("givenName"),
@@ -302,6 +344,11 @@ def create_descope_user(user, hash_params):
             "salt": salt,
         }
 
+        #Put the UUID in the UUID custom attribute per user
+        user_id = user_data.get("localId")
+        if user_id:
+            custom_attributes.update({"UUID":user_id})
+        
         # Fetch custom attributes from Firebase Realtime Database, if URL is provided
         if FIREBASE_DB_URL:
             user_id = user_data.get("localId")
@@ -309,7 +356,23 @@ def create_descope_user(user, hash_params):
                 additional_attributes = fetch_custom_attributes(
                     user_data.get("localId")
                 )
-                custom_attributes.update(additional_attributes)
+
+                if additional_attributes:
+                    flattend_attributes = flatten_dict(additional_attributes)
+                    mapped_dict = {
+                        key: (
+                            "String" if isinstance(value, str) else
+                            "Number" if isinstance(value, (int, float)) else
+                            "Boolean" if isinstance(value, bool) else
+                            "String"
+                        )
+                        for key, value in flattend_attributes.items()
+                    }
+                    # Create the custom attributes will not make duplicates
+                    create_custom_attributes_in_descope(mapped_dict)
+
+                
+                    custom_attributes.update(flattend_attributes)
 
         # Create the Descope user
         user_object = build_user_object_with_passwords(extracted_user, hash_params)
@@ -327,6 +390,83 @@ def create_descope_user(user, hash_params):
             user.get("user_id") + " Reason: " + error.error_message,
         )
 
+def create_custom_attributes_in_descope(custom_attr_dict):
+    """
+    Creates custom attributes in Descope
+
+    Args:
+    - custom_attr_dict: Dictionary of custom attribute names and assosciated data types {"name" : dataType, ...} 
+    """
+
+    type_mapping = {
+        'String': 1,
+        'Number': 2,
+        'Boolean': 3
+    }
+  
+    # Takes indivdual custom attribute and makes a json body for create attribute post request
+    custom_attr_post_body = []
+    for custom_attr_name, custom_attr_type in custom_attr_dict.items():
+        custom_attr_body = {
+            "name": custom_attr_name,
+            "type": type_mapping.get(custom_attr_type, 1), # Defualt to 0 if type not found
+            "options": [],
+            "displayName": custom_attr_name,
+            "defaultValue": {},
+            "viewPermissions": [],
+            "editPermissions": [],
+            "editable": True
+        }
+        custom_attr_post_body.append(custom_attr_body)
+
+    #Combine all custom attribute post request bodies into one
+    #Request for custom attributes to be created using a post request
+    try:
+        endpoint = "https://api.descope.com/v1/mgmt/user/customattribute/create"
+        data = {"attributes":custom_attr_post_body}
+        headers = {
+            "Authorization": f"Bearer {DESCOPE_PROJECT_ID}:{DESCOPE_MANAGEMENT_KEY}",
+            "Content-Type": "application/json"
+            }
+        response = api_request_with_retry(
+            action="post",
+            url=endpoint,
+            headers=headers,
+            data=json.dumps(data)
+            )
+        
+        if response.ok:
+            logging.info(f"Custom attributes successfully created in Descope")
+        else: 
+            response.raise_for_status()
+
+    except requests.HTTPError as e:
+        error_dict = {
+            "status_code":e.response.status_code,
+            "error_reason":e.response.reason,
+            "error_message":e.response.text
+            }
+        logging.error(f"Failed to create custom Attributes: {str(error_dict)}")
+
+
+def flatten_dict(dictionary, parent_key='', separator='_' ):
+    """
+    Takes a dictonary and flattens it if it has nested attributes. 
+    Nested attribute names will be Root.Parents.AttributeName
+
+    Args:
+    - dictionary: dictionary of attributes some of which may be nested
+    - parent_key: used for recursion and defines the root key for attribute names
+    - separator: will be the seperating delimiter between root,parents, and attribute name
+    """
+    items = []
+    for key, value in dictionary.items():
+        new_key = parent_key + separator + key if parent_key else key
+        if isinstance(value, MutableMapping):
+            items.extend(flatten_dict(value,new_key,separator=separator).items())
+        else:
+            items.append((new_key,value))
+    return dict(items)
 
 ### End Descope Actions:
 
@@ -350,6 +490,12 @@ def process_users(api_response_users, hash_params, dry_run):
         print(
             f"Starting migration of {len(api_response_users)} users found via Firebase Admin SDK"
         )
+        # create freshly migrated and UUID custom attributes 
+        freshly_migrated = {"freshlyMigrated":"Boolean"}
+        uuid_attribute = {"UUID":"String"}
+        create_custom_attributes_in_descope(freshly_migrated)
+        create_custom_attributes_in_descope(uuid_attribute)
+        
         for user in api_response_users:
             success, merged, disabled_mismatch, user_id_error = create_descope_user(
                 user, hash_params
@@ -370,6 +516,5 @@ def process_users(api_response_users, hash_params, dry_run):
         merged_users,
         disabled_users_mismatch,
     )
-
 
 ### End Process Functions
