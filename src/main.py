@@ -54,7 +54,6 @@ def main():
 
     # Fetch and Create Users
     firebase_users = fetch_firebase_users()
-    print(firebase_users)
     (
         failed_users,
         successful_migrated_users,
